@@ -64,3 +64,60 @@ Once deployment is complete, the device hosts a local web server on **Port 80**.
 For running on a physical screen attached to the device (SSH or UART):
 ```bash
 python3 ~/theguide/console_guide.py
+Controls: Type query, press Enter. Type exit to quit.
+
+Function: Fetches text, strips HTML/Images, and pipes it to the AI for summarization.
+
+🔧 Architecture
+Backend:
+
+kiwix-serve: Hosts the .zim file on port 9095.
+
+llama.cpp: Hosts the AI model (Qwen 2 0.5B) on port 8080.
+
+Flask (Python): Middleware on port 80. Bridges the user, the database, and the AI.
+
+Storage:
+
+Requires a 4GB Swap file (created automatically) to handle compilation and heavy I/O operations on low-RAM devices.
+
+❓ Troubleshooting
+If the Guide isn't behaving as expected, check these common issues:
+
+1. "Deep Thought" (AI) Returns No Data
+If the retro interface says "The brain provided no data" or simply hangs:
+
+Check Memory (Swap): The Pi Zero 2 W must have an active swap file to run the AI model.
+
+Bash
+
+free -h
+Look for the Swap: line. If it shows 0B, re-run the setup script or enable dphys-swapfile.
+
+Check the AI Service:
+
+Bash
+
+sudo systemctl status guide-ai
+If it's not "active (running)", try restarting it: sudo systemctl restart guide-ai
+
+Patience on Boot: On a cold boot, the AI model takes about 30-60 seconds to load from the SD card into RAM. During this time, queries may fail.
+
+2. Wikipedia Images Not Loading
+Check the ZIM File: Ensure you are using the Maxi version (wikipedia_en_all_maxi.zim) and not the nopic version.
+
+Check Kiwix Service:
+
+Bash
+
+sudo systemctl status guide-kiwix
+3. Web Interface Not Accessible
+Check IP Address: Run hostname -I to confirm the device's IP.
+
+Check Flask Service:
+
+Bash
+
+sudo systemctl status guide-web
+4. System Sluggishness
+First Run: The system builds search indices and caches during the first few queries. Performance improves after 5-10 minutes of uptime.
